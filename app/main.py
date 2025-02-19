@@ -3,6 +3,7 @@ from starlette.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from database import Base, engine
 from routers.track import track_router
+from routers.video import video_router  # Импортируем новый роутер
 
 app = FastAPI()
 
@@ -10,7 +11,7 @@ app = FastAPI()
 origins = [
     "http://localhost:5173",  # разрешаем доступ с локального хоста
     "http://localhost:3000",  # если фронтенд работает на порту 3000 (например, React)
-    "https://your-frontend-url.com",  # добавьте URL вашего фронтенда
+    "https://bejewelled-cannoli-e2e1b0.netlify.app",  # добавьте URL вашего фронтенда
 ]
 
 app.add_middleware(
@@ -28,6 +29,7 @@ async def home():
     return {"message": "Hello, FastAPI!"}
 
 app.include_router(track_router)
+app.include_router(video_router)  # Подключаем новый роутер
 
 Base.metadata.create_all(bind=engine)
 

@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@localhost:5434/postgres"  # Или можно использовать PostgreSQL/MySQL
+SQLALCHEMY_DATABASE_URL = "postgresql://vladdremenko:postgres@localhost:5433/postgres"  # Или можно использовать PostgreSQL/MySQL
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

@@ -3,10 +3,8 @@ from pydantic import BaseModel
 class TrackCreate(BaseModel):
     name: str
     artist: str
-    album: str
     duration: int
-    genre: str
-    release_date: str
+    image: str  # Новое поле для изображения
 
 class TrackResponse(TrackCreate):
     id: int

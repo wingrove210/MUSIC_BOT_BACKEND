@@ -17,10 +17,8 @@ track_router = APIRouter()
 async def create_track(
     name: str = Form(...),
     artist: str = Form(...),
-    album: str = Form(...),
     duration: int = Form(...),
-    genre: str = Form(...),
-    release_date: str = Form(...),
+    image: str = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
@@ -34,11 +32,9 @@ async def create_track(
     new_track = Track(
         name=name,
         artist=artist,
-        album=album,
         duration=duration,
-        genre=genre,
-        release_date=release_date,
         url=file_path,
+        image=image,
     )
     
     db.add(new_track)
@@ -72,3 +68,20 @@ async def download_track(track_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="File not found")
 
     return FileResponse(path=file_path, filename=os.path.basename(file_path), media_type='audio/mpeg')
+
+# 🔹 Удаление трека по ID
+@track_router.delete("/tracks/{track_id}", response_model=TrackResponse)
+async def delete_track(track_id: int, db: Session = Depends(get_db)):
+    track = db.query(Track).filter(Track.id == track_id).first()
+    if not track:
+        raise HTTPException(status_code=404, detail="Track not found")
+
+    # Удаляем файл с диска
+    file_path = track.url
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    # Удаляем трек из базы данных
+    db.delete(track)
+    db.commit()
+    return track
