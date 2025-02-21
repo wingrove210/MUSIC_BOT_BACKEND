@@ -1,8 +1,26 @@
-FROM python:3.10
+FROM python:3.12
 
-WORKDIR /app
-COPY . /app
+ENV PYTHONUNBUFFERED=1
 
-RUN pip install --no-cache-dir -r requirements.txt
+WORKDIR /app/
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Install uv
+# Ref: https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
+COPY --from=ghcr.io/astral-sh/uv:0.4.15 /uv /bin/uv
+
+# Place executables in the environment at the front of the path
+# Ref: https://docs.astral.sh/uv/guides/integration/docker/#using-the-environment
+ENV PATH="/app/.venv/bin:$PATH"
+
+COPY ./pyproject.toml ./uv.lock ./alembic.ini ./main.py ./.env /app/
+COPY ./uploads/ /app/uploads
+COPY ./alembic/ /app/alembic
+COPY ./app /app/app
+
+
+# Sync the project
+# Ref: https://docs.astral.sh/uv/guides/integration/docker/#intermediate-layers
+RUN uv sync
+
+
+CMD ["uv", "run", "/app/main.py"]

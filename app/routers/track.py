@@ -1,34 +1,33 @@
 import os
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlalchemy.orm import Session
-from database import get_db
-from models.track import Track
-from schemas.track import TrackCreate, TrackResponse
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi import Form
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from sqlalchemy import delete, insert, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.database import get_async_session
+from app.models.track import Track
+from app.schemas.track import TrackResponse, TrackCreate
+from fastapi.responses import FileResponse
+
 UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)  # Создаём папку, если её нет
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 track_router = APIRouter()
 
-# 🔹 Загрузка нового трека с файлом
-
-@track_router.post("/tracks", response_model=TrackResponse)
+@track_router.post("/tracks")
 async def create_track(
     name: str = Form(...),
     artist: str = Form(...),
-    duration: int = Form(...),
+    duration: str = Form(...),
     image: str = Form(...),
     file: UploadFile = File(...),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_async_session),
 ):
     file_path = f"{UPLOAD_DIR}/{file.filename}"
 
-    # Сохраняем файл
+    # Save file
     with open(file_path, "wb") as buffer:
         buffer.write(await file.read())
 
-    # Создаём новый объект трека
+    # Create new track object
     new_track = Track(
         name=name,
         artist=artist,
@@ -36,52 +35,63 @@ async def create_track(
         url=file_path,
         image=image,
     )
-    
-    db.add(new_track)
-    db.commit()
-    db.refresh(new_track)
+
+    query = insert(Track).values(name=name,
+                                 artist=artist,
+                                 duration=duration,
+                                 url=file_path,
+                                 image=image,)
+    await db.execute(query)
+    await db.commit()
     return new_track
 
+# Get all tracks
+@track_router.get("/tracks")
+async def get_tracks(db: AsyncSession = Depends(get_async_session)):
+    query = select(Track)
+    data = await db.execute(query)
+    datas = data.mappings().all()
+    tracks = []
+    for row in datas:
+        tracks.append(row["Track"])
+    return tracks
 
-# 🔹 Получение всех треков
-@track_router.get("/tracks", response_model=list[TrackResponse])
-async def get_tracks(db: Session = Depends(get_db)):
-    return db.query(Track).all()
-
-# 🔹 Получение одного трека по ID
-@track_router.get("/tracks/{track_id}", response_model=TrackResponse)
-async def get_track(track_id: int, db: Session = Depends(get_db)):
-    track = db.query(Track).filter(Track.id == track_id).first()
+@track_router.get("/tracks/{track_id}")
+async def get_track(track_id: int, db: AsyncSession = Depends(get_async_session)):
+    query = select(Track).where(Track.id == track_id)
+    result = await db.execute(query)
+    track = result.scalar_one_or_none()
     if not track:
         raise HTTPException(status_code=404, detail="Track not found")
     return track
 
-# 🔹 Раздача файлов (URL)
-@track_router.get("/tracks/{track_id}/download")
-async def download_track(track_id: int, db: Session = Depends(get_db)):
-    track = db.query(Track).filter(Track.id == track_id).first()
+# @track_router.get("/tracks/{track_id}/download")
+# async def download_track(track_id: int, db: AsyncSession = Depends(get_async_session)):
+#     query = select(Track).where(Track.id == track_id)
+#     result = await db.execute(query)
+#     track = result.scalar_one_or_none()
+#     if not track:
+#         raise HTTPException(status_code=404, detail="Track not found")
+
+#     file_path = track.url
+#     if not os.path.exists(file_path):
+#         raise HTTPException(status_code=404, detail="File not found")
+
+#     return FileResponse(path=file_path, filename=os.path.basename(file_path), media_type='audio/mpeg')
+
+@track_router.delete("/tracks/{track_id}")
+async def delete_track(track_id: int, db: AsyncSession = Depends(get_async_session)):
+    query = select(Track).where(Track.id == track_id)
+    result = await db.execute(query)
+    track = result.scalar_one_or_none()
     if not track:
         raise HTTPException(status_code=404, detail="Track not found")
 
-    file_path = track.url
-    if not os.path.exists(file_path):
-        raise HTTPException(status_code=404, detail="File not found")
-
-    return FileResponse(path=file_path, filename=os.path.basename(file_path), media_type='audio/mpeg')
-
-# 🔹 Удаление трека по ID
-@track_router.delete("/tracks/{track_id}", response_model=TrackResponse)
-async def delete_track(track_id: int, db: Session = Depends(get_db)):
-    track = db.query(Track).filter(Track.id == track_id).first()
-    if not track:
-        raise HTTPException(status_code=404, detail="Track not found")
-
-    # Удаляем файл с диска
     file_path = track.url
     if os.path.exists(file_path):
         os.remove(file_path)
 
-    # Удаляем трек из базы данных
-    db.delete(track)
-    db.commit()
+    stmt = delete(Track).where(Track.id == track_id)
+    await db.execute(stmt)
+    await db.commit()
     return track
