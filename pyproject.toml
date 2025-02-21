@@ -24,4 +24,6 @@ dependencies = [
     "scalar-fastapi>=1.0.3",
     "python-multipart>=0.0.20",
     "sqlalchemy>=2.0.38",
+    "boto3>=1.36.25",
+    "greenlet>=3.1.1",
 ]
