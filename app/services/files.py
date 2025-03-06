@@ -24,7 +24,7 @@ async def get_url(file: List[UploadFile]):
 		)
 		uploded_files.append({"filename": f.filename, "status": "uploaded"})
 	async def get(img_url):
-		return ["https://storage.yandexcloud.net/cluddy-bucket/" + uploded_files[f]["filename"] for f in range(len(uploded_files))]
+		return ["https://storage.yandexcloud.net/patriot-music/" + uploded_files[f]["filename"] for f in range(len(uploded_files))]
 	return await get(filenames)
 		
   
@@ -53,7 +53,7 @@ async def get_url_music(file: List[UploadFile]):
         uploaded_files.append({"filename": new_filename, "status": "uploaded"})
     
     return [
-        f"https://storage.yandexcloud.net/cluddy-bucket/{file['filename']}"
+        f"https://storage.yandexcloud.net/patriot-music/{file['filename']}"
         for file in uploaded_files
     ]
 
