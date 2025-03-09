@@ -24,8 +24,6 @@ COPY ./uploads/ /app/uploads
 COPY ./alembic/ /app/alembic
 COPY ./app /app/app
 
-# Устанавливаем uvicorn для hot-reload
-RUN uv pip install uvicorn[standard]
 
 # По умолчанию используем uvicorn с hot-reload
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app"]
+CMD ["uv", "run", "main.py"]

@@ -68,11 +68,7 @@ async def get_url_music(file: List[UploadFile]):
 # 		filenames.append(f.filename)
 # 		s3.upload_fileobj(
 # 			Fileobj=io.BytesIO(file_content),
-<<<<<<< HEAD
 # 			Bucket='patriot-music',
-=======
-# 			Bucket='cluddy-bucket',
->>>>>>> 1abfc546c64dd5956338675ec302070c869d9faf
 # 			Key=f.filename
 # 		)
 # 		uploded_files.append({"filename": f.filename, "status": "uploaded"})
@@ -80,11 +76,7 @@ async def get_url_music(file: List[UploadFile]):
 # 		for f in files:
 # 			url = s3.generate_presigned_url(
 # 				ClientMethod='get_object',
-<<<<<<< HEAD
 # 				Params={'Bucket': 'patriot-music', 'Key': f}
-=======
-# 				Params={'Bucket': 'cluddy-bucket', 'Key': f}
->>>>>>> 1abfc546c64dd5956338675ec302070c869d9faf
 # 			)
 # 			file_urls.append({"filename": f, "url": url})
 # 		return file_urls		

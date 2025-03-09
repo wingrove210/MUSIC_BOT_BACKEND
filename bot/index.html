@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+	<title>Document</title>
+	<script src="https://telegram.org/js/telegram-web-app.js?56"></script>
+</head>
+<body>
+<button class="send">sendData</button>
+</body>
+<script>
+const btn = document.querySelector(".send")
+const tg = window.Telegram.WebApp
+btn.addEventListener("click", async (event) => {
+	// tg.sendData(JSON.stringify({
+	// 	"title": "Оплата за аренду вкартиры",
+	// 	"description": "Оплатите за квартиру до 25.12.2025",
+	// 	"payload": "pay_load",
+	// 	"currency": "RUB",
+	// 	"prices": "4990"
+	// }))
+	link = await fetch("https://api.skyrodev.ru/api/create-invoice?web_app_data=" + JSON.stringify({
+		"title": "Оплата за аренду вкартиры",
+		"description": "Оплатите за квартиру до 25.12.2025",
+		"payload": "pay_load",
+		"currency": "RUB",
+		"prices": "4990"
+	}), {
+		method: "POST"
+	}).then((res) => {
+		return res.json()
+	}).then((data) => {
+		tg.openInvoice(data)
+	})
+})
+</script>
+</html>

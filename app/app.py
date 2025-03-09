@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from app.routers.main import router
 from app.core.logger import logger
 from app.core.config import settings
@@ -16,9 +15,7 @@ app = FastAPI(
 
 # Настройка разрешенных источников
 origins = [
-    "http://localhost:3000",  # Для разработки
-    "http://localhost:8000",  # Для разработки
-    "https://patriot-music.online",  # Продакшен домен
+    "*"
 ]
 
 @app.on_event("startup")
@@ -35,17 +32,8 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-    max_age=600,  # Кэширование preflight запросов на 10 минут
+    allow_headers=["*"]
 )
-
-# Добавляем middleware для проверки доверенных хостов
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["patriot-music.online", "localhost", "127.0.0.1"]
-)
-
 # Монтируем статические файлы с настройками кэширования
 app.mount(
     "/uploads",
