@@ -6,9 +6,8 @@ from app.core.config import settings
 from aiogram.filters import CommandStart
 import requests
 
-# Укажите свой токен
-TOKEN = settings.BOT_TOKEN
-bot = Bot(token=TOKEN)
+
+bot = Bot(settings.TEST_BOT_TOKEN if settings.ENVIRONMENT == "development" else settings.BOT_TOKEN)
 dp = Dispatcher()
 
 class WebAppDataFilter(Filter):
@@ -38,14 +37,22 @@ async def cmd_start(message: types.Message):
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=kb, resize_keyboard=True)
     await message.answer_photo(photo=photo, caption=caption, reply_markup=keyboard)
 
-@dp.pre_checkout_query(lambda x: True)
+@dp.pre_checkout_query()
 async def pre_checkout_handler(query: types.PreCheckoutQuery):
-    redis_client = settings.get_redis()
-    payload = redis_client.get(query.invoice_payload)
-
-    await bot.answer_pre_checkout_query(query.id, ok=True)
+    print(f"PreCheckoutQuery: {query}")
+    try:
+        await query.answer(ok=True) # Не срабатывает
+        print("Ответ на pre_checkout_query отправлен")  # срабатывает
+    except Exception as e:
+        print(f"Ошибка при ответе на pre_checkout_query: {e}")
     @dp.message(lambda x: True)
     async def message_send(message: types.Message):
+        redis_client = settings.get_redis()
+        payload = redis_client.get(query.invoice_payload)
+        if payload is None:
+            print(f"Не найден payload для {query.invoice_payload}")
+        else:
+            print(f"Payload из Redis: {payload}")
         payload_dict = json.loads(payload)
         admin_message = settings.get_application_message(data=payload_dict, type="admin")
         user_message = settings.get_application_message(data=payload_dict, type="user")

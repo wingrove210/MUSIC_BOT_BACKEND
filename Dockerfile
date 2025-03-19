@@ -19,10 +19,11 @@ COPY ./pyproject.toml ./uv.lock /app/
 RUN uv sync
 
 # Копируем остальные файлы проекта
-COPY ./alembic.ini ./main.py /app/
+COPY ./alembic.ini ./main.py ./.env /app/
 COPY ./uploads/ /app/uploads
 COPY ./alembic/ /app/alembic
 COPY ./app /app/app
+COPY . /app/
 
 
 # По умолчанию используем uvicorn с hot-reload

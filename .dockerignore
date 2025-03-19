@@ -1,6 +1,5 @@
 .git
 .gitignore
-.env
 __pycache__
 *.pyc
 *.pyo
@@ -20,7 +19,6 @@ coverage.xml
 *.cover
 *.log
 .pytest_cache/
-.env
 .venv
 logs/
 *.sqlite3

@@ -10,7 +10,7 @@ async def start_server():
     await server.serve()
 
 async def start_bot():
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
 
 
 async def main():

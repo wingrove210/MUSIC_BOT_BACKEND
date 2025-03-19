@@ -26,13 +26,18 @@ class Settings(BaseSettings):
 
     REDIS_HOST: str
     REDIS_PORT: int
+    TEST_REDIS_HOST: str
+    TEST_REDIS_PORT: str
 
     BOT_TOKEN: str
+    TEST_BOT_TOKEN: str
 
     ADMIN_BOT_TOKEN: str
+    YOOKASSA_TG_API: str
+    YOOKASSA_TG_TEST_API: str
 
     # Настройки окружения
-    ENVIRONMENT: str = "development"
+    ENVIRONMENT: Literal["development", "production"]
 
     def get_redis(self):
         return redis.Redis(host=self.REDIS_HOST, port=self.REDIS_PORT, decode_responses=True)
@@ -66,10 +71,10 @@ class Settings(BaseSettings):
       8. Моменты из жизни героя: {data["moments"]}  
       9. Важные слова или цитаты: {data["words"]}  
       10. Дополнительно: 
-         Воспоминания о службе: {data["additionalChecks"]["remembrance"]}
-         Личное обращение: {data["additionalChecks"]["personalMessage"]}
-         Особые фразы: {data["additionalChecks"]["specialPhrases"]}
-         Послание в будущее: {data["additionalChecks"]["futureMessage"]}
+         Воспоминания о службе: {data["remembranceText"]}
+         Личное обращение: {data["personalMessageText"]}
+         Особые фразы: {data["specialPhrasesText"]}
+         Послание в будущее: {data["futureMessageText"]}
          Другое: {data["otherText"]}
         """
         elif type == "user":
@@ -100,10 +105,10 @@ class Settings(BaseSettings):
       8. Моменты из жизни героя: {data["moments"]}  
       9. Важные слова или цитаты: {data["words"]}  
       10. Дополнительно: 
-         Воспоминания о службе: {data["additionalChecks"]["remembrance"]}
-         Личное обращение: {data["additionalChecks"]["personalMessage"]}
-         Особые фразы: {data["additionalChecks"]["specialPhrases"]}
-         Послание в будущее: {data["additionalChecks"]["futureMessage"]}
+          Воспоминания о службе: {data["remembranceText"]}
+         Личное обращение: {data["personalMessageText"]}
+         Особые фразы: {data["specialPhrasesText"]}
+         Послание в будущее: {data["futureMessageText"]}
          Другое: {data["otherText"]}
         """
     def generate_database_url(self) -> str:
