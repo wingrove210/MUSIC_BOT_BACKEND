@@ -4,72 +4,79 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Filter
 from app.core.config import settings
 from aiogram.filters import CommandStart
-import requests
+import aiohttp
+import asyncio
+
+import logging
+logging.basicConfig(level=logging.INFO)
 
 
 bot = Bot(settings.TEST_BOT_TOKEN if settings.ENVIRONMENT == "development" else settings.BOT_TOKEN)
 dp = Dispatcher()
 
+def get_redis_data(key):
+    redis_client = settings.get_redis()
+    payload = redis_client.get(key)
+    if not payload:
+        return None
+    try:
+        return json.loads(payload)
+    except json.JSONDecodeError:
+        print(f"Ошибка декодирования JSON для ключа {key}")
+        return None
+    
+
 class WebAppDataFilter(Filter):
     async def __call__(self, message: types.Message, **kwds) -> Union[bool, Dict[str, Any]]:
         return dict(web_app_data=message.web_app_data) if message.web_app_data else False
 
-def send_message_to_admins(message: str):
-    chats = ["6398268582", "1372814991", "6035406614"]
-    
-    for id in chats:
-        url = f"https://api.telegram.org/bot{settings.ADMIN_BOT_TOKEN}/sendMessage?chat_id={id}&parse_mode=markdown&text={message}"
-        req = requests.get(url=url)
-        print(message)
-        print(req.content)
+async def send_message_to_admins(message: str):
+    chats = ["6398268582", "1372814991", "6035406614", "251173063"]
+    url = f"https://api.telegram.org/bot{settings.ADMIN_BOT_TOKEN}/sendMessage"
+
+    async with aiohttp.ClientSession() as session:
+        tasks = [
+            session.get(url, params={"chat_id": chat_id, "parse_mode": "markdown", "text": message})
+            for chat_id in chats
+        ]
+        await asyncio.gather(*tasks)
 
 @dp.message(CommandStart())
 async def cmd_start(message: types.Message):
-    caption = """Привет!
-Мы команда профессионалов, создаём песни для героев, превращая их истории в музыку.
-
-Вы можете подарить песню близкому на фронте или, находясь на передовой, передать его родным. Музыка навсегда увековечит историю и имя героя. 
-
-Жми на старт – и мы создадим для вас песню"""
-    photo = "https://storage.yandexcloud.net/patriot-music/svo_photo.jpg"
+    caption = (
+        "Привет!\n"
+        "Мы команда профессионалов, создаём песни для героев, превращая их истории в музыку.\n\n"
+        "Вы можете подарить песню близкому на фронте или, находясь на передовой, передать его родным. "
+        "Музыка навсегда увековечит историю и имя героя.\n\n"
+        "Жми на старт – и мы создадим для вас песню."
+    )
+    photo = settings.SVO_PHOTO_URL
     adminTG = "https://t.me/PATRIOT_MNGR"
-    kb = [[types.InlineKeyboardButton(text="Тех.поддержка", url=adminTG)]]
-    keyboard = types.InlineKeyboardMarkup(inline_keyboard=kb, resize_keyboard=True)
+    keyboard = types.InlineKeyboardMarkup(
+        inline_keyboard=[[types.InlineKeyboardButton(text="Тех.поддержка", url=adminTG)]]
+    )
     await message.answer_photo(photo=photo, caption=caption, reply_markup=keyboard)
+
 
 @dp.pre_checkout_query()
 async def pre_checkout_handler(query: types.PreCheckoutQuery):
-    print(f"PreCheckoutQuery: {query}")
+    logging.info(f"Получен pre_checkout запрос от {query.from_user.id}: {query.invoice_payload}")
+    await query.answer(ok=True)
+            
+@dp.message(F.successful_payment)
+async def message_send(message: types.SuccessfulPayment):
     try:
-        await query.answer(ok=True) # Не срабатывает
-        print("Ответ на pre_checkout_query отправлен")  # срабатывает
-    except Exception as e:
-        print(f"Ошибка при ответе на pre_checkout_query: {e}")
-    @dp.message(lambda x: True)
-    async def message_send(message: types.Message):
-        redis_client = settings.get_redis()
-        payload = redis_client.get(query.invoice_payload)
-        if payload is None:
-            print(f"Не найден payload для {query.invoice_payload}")
-        else:
-            print(f"Payload из Redis: {payload}")
-        payload_dict = json.loads(payload)
-        admin_message = settings.get_application_message(data=payload_dict, type="admin")
-        user_message = settings.get_application_message(data=payload_dict, type="user")
+        data = get_redis_data(message.successful_payment.invoice_payload)
+        if data is None:
+            logging.warning(f"Не удалось получить данные из Redis: {message.successful_payment.invoice_payload}")
+            return 
+
+        logging.info(f"Успешный платеж: {data}")
+        admin_message = settings.get_application_message(data=data, type="admin")
+        user_message = settings.get_application_message(data=data, type="user")
+
         await message.answer(user_message, parse_mode="markdown")
+        await send_message_to_admins(admin_message)
 
-        send_message_to_admins(admin_message)
-
-
-# async def invoice(message: types.Message, web_app_data: types.WebAppData):
-#     web_app_data = json.loads(web_app_data.data)
-#     price = [types.LabeledPrice(label="Pay", amount=int(web_app_data["prices"]) * 100)]
-    # await bot.send_invoice(
-    #     chat_id=message.chat.id,
-    #     title=web_app_data["title"],
-    #     description=web_app_data["description"],
-    #     payload=web_app_data["payload"],
-    #     currency=web_app_data["currency"],
-    #     prices=price,
-    #     provider_token="381764678:TEST:114933"
-    # )
+    except Exception as e:
+        logging.error(f"Ошибка обработки платежа: {e}")

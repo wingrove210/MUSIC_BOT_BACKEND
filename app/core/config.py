@@ -39,8 +39,14 @@ class Settings(BaseSettings):
     # Настройки окружения
     ENVIRONMENT: Literal["development", "production"]
 
+    SVO_PHOTO_URL: str = "https://storage.yandexcloud.net/patriot-music/svo_photo.jpg"
+    INVOICE_PHOTO_URL: str = "https://storage.yandexcloud.net/patriot-music/Frame%2095.png"
+
     def get_redis(self):
-        return redis.Redis(host=self.REDIS_HOST, port=self.REDIS_PORT, decode_responses=True)
+        return redis.Redis(
+            host=f"{self.REDIS_HOST}", 
+            port=self.REDIS_PORT,
+            decode_responses=True)
 
     def get_application_message(self, data: dict, type: Literal["admin", "user"]):
         if type == "admin":
@@ -50,6 +56,7 @@ class Settings(BaseSettings):
       Email: {data["email"]}
       Телефон: {data["phone"]}
       Телеграм: {data["telegram"]}
+      Тариф: {data["planName"]}
 
       • Кто заполняет форму: {data["formRole"]}  
       • Для кого создаётся песня: {data["songFor"]}  
@@ -84,6 +91,7 @@ class Settings(BaseSettings):
       Email: {data["email"]}
       Телефон: {data["phone"]}
       Телеграм: {data["telegram"]}
+      Тариф: {data["planName"]}
 
       • Кто заполняет форму: {data["formRole"]}  
       • Для кого создаётся песня: {data["songFor"]}  
