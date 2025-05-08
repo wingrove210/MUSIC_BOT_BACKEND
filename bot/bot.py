@@ -52,8 +52,10 @@ async def cmd_start(message: types.Message):
     )
     photo = settings.SVO_PHOTO_URL
     adminTG = "https://t.me/PATRIOT_MNGR"
+    comments_tg = "https://t.me/patriotComments"
     keyboard = types.InlineKeyboardMarkup(
-        inline_keyboard=[[types.InlineKeyboardButton(text="Тех.поддержка", url=adminTG)]]
+        inline_keyboard=[[types.InlineKeyboardButton(text="Тех.поддержка", url=adminTG)], 
+                         [types.InlineKeyboardButton(text="Комментарии", url=adminTG)]]
     )
     await message.answer_photo(photo=photo, caption=caption, reply_markup=keyboard)
 
