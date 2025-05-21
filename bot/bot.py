@@ -55,7 +55,7 @@ async def cmd_start(message: types.Message):
     comments_tg = "https://t.me/patriotComments"
     keyboard = types.InlineKeyboardMarkup(
         inline_keyboard=[[types.InlineKeyboardButton(text="Тех.поддержка", url=adminTG)], 
-                         [types.InlineKeyboardButton(text="Комментарии", url=adminTG)]]
+                         [types.InlineKeyboardButton(text="Отзывы", url=comments_tg)]]
     )
     await message.answer_photo(photo=photo, caption=caption, reply_markup=keyboard)
 

@@ -56,28 +56,3 @@ async def get_url_music(file: List[UploadFile]):
         f"https://storage.yandexcloud.net/patriot-music/{file['filename']}"
         for file in uploaded_files
     ]
-
-# # ## Из файла
-# async def upload_file_to_s3(file: List[UploadFile]):
-# 	uploded_files = []
-# 	filenames = []
-# 	file_urls = []
-# 	for f in file:
-# 		file_content = await f.read()
-# 		f.filename = str(uuid.uuid4()) + ".jpg"
-# 		filenames.append(f.filename)
-# 		s3.upload_fileobj(
-# 			Fileobj=io.BytesIO(file_content),
-# 			Bucket='patriot-music',
-# 			Key=f.filename
-# 		)
-# 		uploded_files.append({"filename": f.filename, "status": "uploaded"})
-# 	async def get_url_from_s3(files: List[str]):
-# 		for f in files:
-# 			url = s3.generate_presigned_url(
-# 				ClientMethod='get_object',
-# 				Params={'Bucket': 'patriot-music', 'Key': f}
-# 			)
-# 			file_urls.append({"filename": f, "url": url})
-# 		return file_urls		
-# 	return await get_url_from_s3(filenames)
